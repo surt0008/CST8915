@@ -1,6 +1,5 @@
 # ============================
-# Algonquin Pet Store - Task 1
-# Basic Deployment (no persistence)
+# Algonquin Pet Store - Task 1 
 # ============================
 
 apiVersion: v1
