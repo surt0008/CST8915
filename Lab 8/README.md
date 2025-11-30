@@ -18,7 +18,7 @@ Each pod receives its own persistent disk through a PVC:
 
 This ensures data is not lost when pods are deleted or recreated.
 
-#### ✔ Steps I Performed
+#### Steps I Performed
 - Connected to the primary MongoDB pod using the `mongo` shell  
 - Inserted test data into the `orderdb` database  
 - Deleted the primary pod (`mongodb-0`)  
@@ -27,3 +27,4 @@ This ensures data is not lost when pods are deleted or recreated.
 - Verified that the inserted data persisted 
 
 ## For the rabbitmq part, I was not able to login to the localhost as it was saying not authorized even if I was entering right username and password.
+
