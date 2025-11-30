@@ -1,18 +1,8 @@
-# ============================
-# Algonquin Pet Store - Task 2
-# Persistence + Replica Sets
-# ============================
-
 apiVersion: v1
 kind: Namespace
 metadata:
   name: aps
-
 ---
-
-# ---------------------------------------------------
-# MongoDB Headless Service  (Required for StatefulSet)
-# ---------------------------------------------------
 apiVersion: v1
 kind: Service
 metadata:
@@ -24,12 +14,7 @@ spec:
     app: mongodb
   ports:
     - port: 27017
-
 ---
-
-# ---------------------------------------------------
-# MongoDB StatefulSet WITH REPLICA SET INITIALIZATION
-# ---------------------------------------------------
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
@@ -41,37 +26,11 @@ spec:
   selector:
     matchLabels:
       app: mongodb
-
   template:
     metadata:
       labels:
         app: mongodb
-
     spec:
-      # Init container to configure replica set
-      initContainers:
-        - name: init-mongo
-          image: mongo:4.2
-          command:
-            - sh
-            - -c
-            - |
-              echo "Waiting for MongoDB startup..."
-              until mongo --host mongodb-0.mongodb --eval "db.adminCommand('ping')" >/dev/null 2>&1; do
-                sleep 3
-              done
-              echo "Initializing replica set..."
-              mongo --host mongodb-0.mongodb <<EOF
-              rs.initiate({
-                _id: "rs0",
-                members: [
-                  { _id: 0, host: "mongodb-0.mongodb:27017" },
-                  { _id: 1, host: "mongodb-1.mongodb:27017" },
-                  { _id: 2, host: "mongodb-2.mongodb:27017" }
-                ]
-              })
-              EOF
-
       containers:
         - name: mongodb
           image: mongo:4.2
@@ -79,12 +38,12 @@ spec:
             - "mongod"
             - "--replSet"
             - "rs0"
+            - "--bind_ip_all"
           ports:
             - containerPort: 27017
           volumeMounts:
             - name: mongo-persistent-storage
               mountPath: /data/db
-
   volumeClaimTemplates:
     - metadata:
         name: mongo-persistent-storage
@@ -93,12 +52,7 @@ spec:
         resources:
           requests:
             storage: 1Gi
-
 ---
-
-# ---------------------------------------------------
-# RabbitMQ PVC (Persistent Storage)
-# ---------------------------------------------------
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
@@ -109,12 +63,7 @@ spec:
   resources:
     requests:
       storage: 1Gi
-
 ---
-
-# ---------------------------------------------------
-# RabbitMQ Service (Correct ports + names required)
-# ---------------------------------------------------
 apiVersion: v1
 kind: Service
 metadata:
@@ -126,16 +75,9 @@ spec:
   ports:
     - name: amqp
       port: 5672
-      targetPort: 5672
     - name: management
       port: 15672
-      targetPort: 15672
-
 ---
-
-# ---------------------------------------------------
-# RabbitMQ Deployment (with PVC)
-# ---------------------------------------------------
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -158,205 +100,9 @@ spec:
             - containerPort: 5672
             - containerPort: 15672
           volumeMounts:
-            - mountPath: /var/lib/rabbitmq
-              name: rabbitmq-storage
+            - name: rabbitmq-storage
+              mountPath: /var/lib/rabbitmq
       volumes:
         - name: rabbitmq-storage
           persistentVolumeClaim:
             claimName: rabbitmq-pvc
-
----
-
-# ============================
-# Microservices (same as Task 1)
-# ============================
-
-# ORDER SERVICE
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: order-service
-  namespace: aps
-spec:
-  replicas: 1
-  selector:
-    matchLabels:
-      app: order-service
-  template:
-    metadata:
-      labels:
-        app: order-service
-    spec:
-      containers:
-        - name: order-service
-          image: rohan2993/order-service-l8:latest
-          ports:
-            - containerPort: 8080
-
----
-
-# AI SERVICE
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: ai-service
-  namespace: aps
-spec:
-  replicas: 1
-  selector:
-    matchLabels:
-      app: ai-service
-  template:
-    metadata:
-      labels:
-        app: ai-service
-    spec:
-      containers:
-        - name: ai-service
-          image: rohan2993/ai-service-l8:latest
-          ports:
-            - containerPort: 8080
-
----
-
-# STORE ADMIN
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: store-admin
-  namespace: aps
-spec:
-  replicas: 1
-  selector:
-    matchLabels:
-      app: store-admin
-  template:
-    metadata:
-      labels:
-        app: store-admin
-    spec:
-      containers:
-        - name: store-admin
-          image: rohan2993/store-admin-l8:latest
-          ports:
-            - containerPort: 8080
-
----
-
-# STORE FRONT
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: store-front
-  namespace: aps
-spec:
-  replicas: 1
-  selector:
-    matchLabels:
-      app: store-front
-  template:
-    metadata:
-      labels:
-        app: store-front
-    spec:
-      containers:
-        - name: store-front
-          image: rohan2993/store-front-l8:latest
-          ports:
-            - containerPort: 8080
-
----
-
-# VIRTUAL CUSTOMER
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: virtual-customer
-  namespace: aps
-spec:
-  replicas: 1
-  selector:
-    matchLabels:
-      app: virtual-customer
-  template:
-    metadata:
-      labels:
-        app: virtual-customer
-    spec:
-      containers:
-        - name: virtual-customer
-          image: rohan2993/virtual-customer-l8:latest
-          ports:
-            - containerPort: 8080
-
----
-
-# VIRTUAL WORKER
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: virtual-worker
-  namespace: aps
-spec:
-  replicas: 1
-  selector:
-    matchLabels:
-      app: virtual-worker
-  template:
-    metadata:
-      labels:
-        app: virtual-worker
-    spec:
-      containers:
-        - name: virtual-worker
-          image: rohan2993/virtual-worker-l8:latest
-          ports:
-            - containerPort: 8080
-
----
-
-# MAKELINE SERVICE
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: makeline-service
-  namespace: aps
-spec:
-  replicas: 1
-  selector:
-    matchLabels:
-      app: makeline-service
-  template:
-    metadata:
-      labels:
-        app: makeline-service
-    spec:
-      containers:
-        - name: makeline-service
-          image: rohan2993/makeline-service-l8:latest
-          ports:
-            - containerPort: 8080
-
----
-
-# PRODUCT SERVICE
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: product-service
-  namespace: aps
-spec:
-  replicas: 1
-  selector:
-    matchLabels:
-      app: product-service
-  template:
-    metadata:
-      labels:
-        app: product-service
-    spec:
-      containers:
-        - name: product-service
-          image: rohan2993/product-service-l8:latest
-          ports:
-            - containerPort: 8080
