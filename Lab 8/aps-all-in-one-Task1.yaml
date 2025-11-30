@@ -1,0 +1,277 @@
+# ============================
+# Algonquin Pet Store - Task 1
+# Basic Deployment (no persistence)
+# ============================
+
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: aps
+
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: mongodb
+  namespace: aps
+spec:
+  ports:
+    - port: 27017
+  selector:
+    app: mongodb
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mongodb
+  namespace: aps
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mongodb
+  template:
+    metadata:
+      labels:
+        app: mongodb
+    spec:
+      containers:
+        - name: mongodb
+          image: mongo:6
+          ports:
+            - containerPort: 27017
+
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: rabbitmq
+  namespace: aps
+spec:
+  ports:
+    - port: 5672
+    - port: 15672
+  selector:
+    app: rabbitmq
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: rabbitmq
+  namespace: aps
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: rabbitmq
+  template:
+    metadata:
+      labels:
+        app: rabbitmq
+    spec:
+      containers:
+        - name: rabbitmq
+          image: rabbitmq:3-management
+          ports:
+            - containerPort: 5672
+            - containerPort: 15672
+
+---
+
+# ============================
+# Microservices (Task 1)
+# ============================
+
+# ORDER SERVICE
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: order-service
+  namespace: aps
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: order-service
+  template:
+    metadata:
+      labels:
+        app: order-service
+    spec:
+      containers:
+        - name: order-service
+          image: rohan2993/order-service-l8:latest
+          ports:
+            - containerPort: 8080
+
+---
+
+# AI SERVICE
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ai-service
+  namespace: aps
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ai-service
+  template:
+    metadata:
+      labels:
+        app: ai-service
+    spec:
+      containers:
+        - name: ai-service
+          image: rohan2993/ai-service-l8:latest
+          ports:
+            - containerPort: 8080
+
+---
+
+# STORE ADMIN
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: store-admin
+  namespace: aps
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: store-admin
+  template:
+    metadata:
+      labels:
+        app: store-admin
+    spec:
+      containers:
+        - name: store-admin
+          image: rohan2993/store-admin-l8:latest
+          ports:
+            - containerPort: 8080
+
+---
+
+# STORE FRONT
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: store-front
+  namespace: aps
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: store-front
+  template:
+    metadata:
+      labels:
+        app: store-front
+    spec:
+      containers:
+        - name: store-front
+          image: rohan2993/store-front-l8:latest
+          ports:
+            - containerPort: 8080
+
+---
+
+# VIRTUAL CUSTOMER
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: virtual-customer
+  namespace: aps
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: virtual-customer
+  template:
+    metadata:
+      labels:
+        app: virtual-customer
+    spec:
+      containers:
+        - name: virtual-customer
+          image: rohan2993/virtual-customer-l8:latest
+          ports:
+            - containerPort: 8080
+
+---
+
+# VIRTUAL WORKER
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: virtual-worker
+  namespace: aps
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: virtual-worker
+  template:
+    metadata:
+      labels:
+        app: virtual-worker
+    spec:
+      containers:
+        - name: virtual-worker
+          image: rohan2993/virtual-worker-l8:latest
+          ports:
+            - containerPort: 8080
+
+---
+
+# MAKELINE SERVICE
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: makeline-service
+  namespace: aps
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: makeline-service
+  template:
+    metadata:
+      labels:
+        app: makeline-service
+    spec:
+      containers:
+        - name: makeline-service
+          image: rohan2993/makeline-service-l8:latest
+          ports:
+            - containerPort: 8080
+
+---
+
+# PRODUCT SERVICE
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: product-service
+  namespace: aps
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: product-service
+  template:
+    metadata:
+      labels:
+        app: product-service
+    spec:
+      containers:
+        - name: product-service
+          image: rohan2993/product-service-l8:latest
+          ports:
+            - containerPort: 8080
